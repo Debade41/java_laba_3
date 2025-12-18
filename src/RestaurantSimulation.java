@@ -5,11 +5,12 @@ import java.util.concurrent.BlockingQueue;
 
 public class RestaurantSimulation {
     public static void main(String[] args) throws InterruptedException {
-        int waiterCount = 5;          
-        int cookCount = 1;            
-        int simulationTimeSec = 18;   
+        final int waiterCount = 5;
+        final int cookCount = 2;
+        final int simulationTimeSec = 20;
+        final int queueCapacity = 3;
 
-        BlockingQueue<Order> kitchenQueue = new ArrayBlockingQueue<>(3);
+        BlockingQueue<Order> kitchenQueue = new ArrayBlockingQueue<>(queueCapacity);
 
         QueueMonitor monitor = new QueueMonitor(kitchenQueue);
         Thread monitorThread = new Thread(monitor, "Queue-Monitor");
@@ -28,6 +29,10 @@ public class RestaurantSimulation {
             t.start();
         }
 
+        Log.msg("Main", "Используемая конфигурация: официанты=" + waiterCount +
+                ", повара=" + cookCount +
+                ", очередь=" + queueCapacity +
+                ", длительность=" + simulationTimeSec + " сек");
         Log.msg("Main", "Симуляция ресторана запущена на " + simulationTimeSec + " секунд");
 
         Thread.sleep(simulationTimeSec * 1000L);

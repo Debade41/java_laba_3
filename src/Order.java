@@ -1,4 +1,5 @@
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Order {
@@ -45,6 +46,13 @@ public class Order {
 
     public void awaitReady() throws InterruptedException {
         readyLatch.await();
+    }
+
+    public boolean awaitReady(long timeoutMs) throws InterruptedException {
+        if (timeoutMs <= 0) {
+            return readyLatch.await(0, TimeUnit.MILLISECONDS);
+        }
+        return readyLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
     }
 
     @Override

@@ -1,7 +1,9 @@
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Kitchen {
     private final BlockingQueue<Order> orderQueue;
@@ -10,16 +12,15 @@ public class Kitchen {
 
     public Kitchen(BlockingQueue<Order> orderQueue, int cookCount) {
         this.orderQueue = orderQueue;
-        this.cooksPool = Executors.newFixedThreadPool(cookCount);
+        this.cooksPool = Executors.newFixedThreadPool(cookCount, new NamedThreadFactory("Cook"));
 
-        // Запуск cookCount поваров, каждый в своём потоке пула
-        for (int i = 1; i <= cookCount; i++) {
-            final String cookName = "Cook-" + i;
-            cooksPool.submit(() -> cookLoop(cookName));
+        for (int i = 0; i < cookCount; i++) {
+            cooksPool.submit(this::cookLoop);
         }
     }
 
-    private void cookLoop(String cookName) {
+    private void cookLoop() {
+        String cookName = Thread.currentThread().getName();
         try {
             while (running || !orderQueue.isEmpty()) {
                 Order order;
@@ -73,5 +74,21 @@ public class Kitchen {
             Thread.currentThread().interrupt();
         }
         Log.msg("Kitchen", "Кухня остановлена");
+    }
+
+    private static final class NamedThreadFactory implements ThreadFactory {
+        private final String prefix;
+        private final AtomicInteger counter = new AtomicInteger(1);
+
+        private NamedThreadFactory(String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setName(prefix + "-" + counter.getAndIncrement());
+            return thread;
+        }
     }
 }
